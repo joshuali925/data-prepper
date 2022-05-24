@@ -47,14 +47,46 @@ public class JacksonEventTest {
 
     @Test
     public void testPutAndGet_withRandomString() {
-        final String key = "aRandomKey" + UUID.randomUUID();
-        final UUID value = UUID.randomUUID();
-
-        event.put(key, value);
-        final UUID result = event.get(key, UUID.class);
-
-        assertThat(result, is(notNullValue()));
-        assertThat(result, is(equalTo(value)));
+        JacksonEvent a =JacksonEvent.builder()
+            .withEventType("testppl")
+            .withData("{\n" +
+                "  \"schema\": [\n" +
+                "    {\n" +
+                "      \"name\": \"message\",\n" +
+                "      \"type\": \"string\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"datarows\": [\n" +
+                "    [\n" +
+                "      \"{\\\"message\\\":\\\"ed58c98b-137f-4a21-b620-7a09312b03b2\\\"}\"\n" +
+                "    ],\n" +
+                "    [\n" +
+                "      \"{\\\"message\\\":\\\"7fc8e9cf-3013-4b38-b341-f1dd3823297e\\\"}\"\n" +
+                "    ],\n" +
+                "    [\n" +
+                "      \"{\\\"message\\\":\\\"cbfcc15f-279f-4b72-adb5-889be04365b2\\\"}\"\n" +
+                "    ],\n" +
+                "    [\n" +
+                "      \"{\\\"message\\\":\\\"3dd634e8-a56a-4872-8e3d-7a9ebfd59cd5\\\"}\"\n" +
+                "    ],\n" +
+                "    [\n" +
+                "      \"{\\\"message\\\":\\\"45f2e8a9-ff32-4a04-9bc6-537d7c1b5d0a\\\"}\"\n" +
+                "    ],\n" +
+                "    [\n" +
+                "      \"{\\\"message\\\":\\\"7888e0bc-0d79-4981-b01a-475f1c7b86c5\\\"}\"\n" +
+                "    ],\n" +
+                "    [\n" +
+                "      \"{\\\"message\\\":\\\"eeb40c92-435b-4c32-8a03-31b968c981fe\\\"}\"\n" +
+                "    ],\n" +
+                "    [\n" +
+                "      \"{\\\"message\\\":\\\"6e3d4e15-d728-4f06-945b-166f18810b7a\\\"}\"\n" +
+                "    ]\n" +
+                "  ],\n" +
+                "  \"total\": 8,\n" +
+                "  \"size\": 8\n" +
+                "}")
+            .build();
+        System.out.println(a);
     }
 
     @ParameterizedTest
