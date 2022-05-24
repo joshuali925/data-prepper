@@ -2,22 +2,19 @@ simple-sample-pipeline:
   workers: 2
   delay: "15000"
   source:
-    http:
-      # Explicitly disable SSL
-      ssl: false
-      # Explicitly disable authentication
-      authentication:
-        unauthenticated:
-      # The default port that will listen for incoming logs
-      port: 2021
-    # random:
+    # http:
+    #   ssl: false
+    #   authentication:
+    #     unauthenticated:
+    #   port: 2021
+    random:
     # file:
     #   path: "/home/lijshu/projects/os-2.0/opensearch-dashboards/dashboards.log"
     #   format: "json"
     #   record_type: "event"
   processor:
     - string_converter:
-        upper_case: true
+        upper_case: "source = stdin | where a =b"
   sink:
     - stdout:
     # - opensearch:

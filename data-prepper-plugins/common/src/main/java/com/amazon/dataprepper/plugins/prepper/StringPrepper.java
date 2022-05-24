@@ -41,16 +41,16 @@ public class StringPrepper implements Prepper<Record<Event>, Record<Event>> {
 
     public static final String UPPER_CASE = "upper_case";
 
-    private final boolean upperCase;
+    private final String upperCase;
 
     public static class Configuration {
-        private boolean upperCase = true;
+        private String upperCase = "source = stdin";
 
-        public boolean getUpperCase() {
+        public String getUpperCase() {
             return upperCase;
         }
 
-        public void setUpperCase(final boolean upperCase) {
+        public void setUpperCase(final String upperCase) {
             this.upperCase = upperCase;
         }
     }
@@ -70,7 +70,7 @@ public class StringPrepper implements Prepper<Record<Event>, Record<Event>> {
 
     private Collection<Record<Event>> executePPL(Collection<Record<Event>> input) {
         try {
-            ProcessBuilder builder = new ProcessBuilder("java", "-jar", "/Users/lijshu/Projects/os-2.0/sql/libppl/build/libs/libppl-2.0.0.0-SNAPSHOT.jar", "source = stdin");
+            ProcessBuilder builder = new ProcessBuilder("java", "-jar", "/Users/lijshu/Projects/os-2.0/sql/libppl/build/libs/libppl-2.0.0.0-SNAPSHOT.jar", upperCase);
             Process process = builder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
@@ -119,18 +119,18 @@ public class StringPrepper implements Prepper<Record<Event>, Record<Event>> {
         // return modifiedRecords;
     }
 
-    private Map<String, Object> processEventJson(final String data) throws JsonProcessingException {
-        final Map<String, Object> dataMap = objectMapper.readValue(data, mapTypeReference);
-        return dataMap.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-                    final Object val = entry.getValue();
-                    if (val instanceof String) {
-                        return upperCase? ((String) val).toUpperCase() : ((String) val).toLowerCase();
-                    } else {
-                        return val;
-                    }
-                }));
-    }
+    // private Map<String, Object> processEventJson(final String data) throws JsonProcessingException {
+    //     final Map<String, Object> dataMap = objectMapper.readValue(data, mapTypeReference);
+    //     return dataMap.entrySet().stream()
+    //             .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+    //                 final Object val = entry.getValue();
+    //                 if (val instanceof String) {
+    //                     return upperCase? ((String) val).toUpperCase() : ((String) val).toLowerCase();
+    //                 } else {
+    //                     return val;
+    //                 }
+    //             }));
+    // }
 
     @Override
     public void prepareForShutdown() {
