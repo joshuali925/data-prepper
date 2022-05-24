@@ -1,5 +1,5 @@
 simple-sample-pipeline:
-  workers: 2
+  workers: 1
   delay: "15000"
   source:
     # http:
@@ -14,7 +14,7 @@ simple-sample-pipeline:
     #   record_type: "event"
   processor:
     - string_converter:
-        upper_case: "source = stdin | where a =b"
+        upper_case: "source = stdin | stats count()"
   sink:
     - stdout:
     # - opensearch:

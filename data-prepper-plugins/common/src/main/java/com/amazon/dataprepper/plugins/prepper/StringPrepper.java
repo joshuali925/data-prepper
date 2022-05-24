@@ -70,7 +70,8 @@ public class StringPrepper implements Prepper<Record<Event>, Record<Event>> {
 
     private Collection<Record<Event>> executePPL(Collection<Record<Event>> input) {
         try {
-            ProcessBuilder builder = new ProcessBuilder("java", "-jar", "/Users/lijshu/Projects/os-2.0/sql/libppl/build/libs/libppl-2.0.0.0-SNAPSHOT.jar", upperCase);
+            System.out.println("[" + getClass().getSimpleName() + " " + (upperCase).getClass().getSimpleName() + "] ❗upperCase: " + upperCase);
+            ProcessBuilder builder = new ProcessBuilder("java", "-jar", System.getProperty("user.dir") + "/../sql/libppl/build/libs/libppl-2.0.0.0-SNAPSHOT.jar", upperCase);
             Process process = builder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
