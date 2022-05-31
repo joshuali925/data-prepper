@@ -21,6 +21,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.Arrays;
+import org.opensearch.sql.common.response.ResponseListener;
+import org.opensearch.sql.libppl.LibPPLQueryAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,19 +42,23 @@ public class StringPrepper implements Prepper<Record<Event>, Record<Event>> {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final TypeReference<Map<String, Object>> mapTypeReference = new TypeReference<Map<String, Object>>() {};
 
-    public static final String UPPER_CASE = "upper_case";
-
-    private final String upperCase;
+    private final String[] query;
+    private final String pplLibPath;
 
     public static class Configuration {
-        private String upperCase = "source = stdin";
+        private String[] query = new String[]{"source = stdin"};
+        private String pplLibPath;
 
-        public String getUpperCase() {
-            return upperCase;
+        public String[] getQuery() {
+            return query;
         }
 
-        public void setUpperCase(final String upperCase) {
-            this.upperCase = upperCase;
+        public String getPplLibPath() {
+            return pplLibPath;
+        }
+
+        public void setQuery(final String[] query) {
+            this.query = query;
         }
     }
 
@@ -65,13 +72,16 @@ public class StringPrepper implements Prepper<Record<Event>, Record<Event>> {
      */
     @DataPrepperPluginConstructor
     public StringPrepper(final Configuration configuration) {
-        this.upperCase = configuration.getUpperCase();
+        this.query = configuration.getQuery();
+        this.pplLibPath = configuration.getPplLibPath();
     }
 
     private Collection<Record<Event>> executePPL(Collection<Record<Event>> input) {
         try {
-            System.out.println("[" + getClass().getSimpleName() + " " + (upperCase).getClass().getSimpleName() + "] ❗upperCase: " + upperCase);
-            ProcessBuilder builder = new ProcessBuilder("java", "-jar", System.getProperty("user.dir") + "/../sql/libppl/build/libs/libppl-2.0.0.0-SNAPSHOT.jar", upperCase);
+            // System.out.println("[" + getClass().getSimpleName() + " " + (query).getClass().getSimpleName() + "] ❗query: " +
+            //     Arrays.toString(query));
+            // System.out.println(pplLibPath);
+            ProcessBuilder builder = new ProcessBuilder("java", "-jar", pplLibPath, query[0]);
             Process process = builder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
@@ -126,7 +136,7 @@ public class StringPrepper implements Prepper<Record<Event>, Record<Event>> {
     //             .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
     //                 final Object val = entry.getValue();
     //                 if (val instanceof String) {
-    //                     return upperCase? ((String) val).toUpperCase() : ((String) val).toLowerCase();
+    //                     return query? ((String) val).toUpperCase() : ((String) val).toLowerCase();
     //                 } else {
     //                     return val;
     //                 }

@@ -14,7 +14,10 @@ simple-sample-pipeline:
     #   record_type: "event"
   processor:
     - string_converter:
-        upper_case: "source = stdin | stats count()"
+        ppl_lib_path: "../sql/libppl/build/libs/libppl-2.0.0.0-SNAPSHOT.jar"
+        query:
+          - "source = stdin | stats count()"
+          - "test2"
   sink:
     - stdout:
     # - opensearch:
