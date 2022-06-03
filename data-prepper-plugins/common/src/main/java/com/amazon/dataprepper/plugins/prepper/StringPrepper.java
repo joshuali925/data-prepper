@@ -8,7 +8,9 @@ package com.amazon.dataprepper.plugins.prepper;
 import com.amazon.dataprepper.model.annotations.DataPrepperPlugin;
 import com.amazon.dataprepper.model.annotations.DataPrepperPluginConstructor;
 import com.amazon.dataprepper.model.configuration.PluginSetting;
+import com.amazon.dataprepper.model.event.DefaultEventMetadata;
 import com.amazon.dataprepper.model.event.Event;
+import com.amazon.dataprepper.model.event.EventMetadata;
 import com.amazon.dataprepper.model.event.JacksonEvent;
 import com.amazon.dataprepper.model.prepper.Prepper;
 import com.amazon.dataprepper.model.record.Record;
@@ -86,10 +88,12 @@ public class StringPrepper implements Prepper<Record<Event>, Record<Event>> {
             });
         Iterable<Map<String, Object>> output = libPPLQueryAction.getOutput();
         Collection<Record<Event>> modifiedRecords = new ArrayList<>();
+        EventMetadata eventMetadata = DefaultEventMetadata.builder().withEventType("event").build();
         output.forEach(map -> {
+            map.put("timeReceived", eventMetadata.getTimeReceived().toString());
             Event newEvent = JacksonEvent.builder()
                 .withData(map)
-                .withEventType("event")
+                .withEventMetadata(eventMetadata)
                 .build();
             modifiedRecords.add(new Record<>(newEvent));
         });
