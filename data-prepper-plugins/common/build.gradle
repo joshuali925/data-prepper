@@ -17,7 +17,7 @@ dependencies {
     implementation "org.bouncycastle:bcprov-jdk15on:1.69"
     implementation "org.bouncycastle:bcpkix-jdk15on:1.69"
     implementation 'org.reflections:reflections:0.10.2'
-    implementation files('/Users/lijshu/Projects/os-2.0/sql/libppl/build/libs/libppl-2.0.0.0-SNAPSHOT.jar')
+    implementation files('../../../sql/libppl/build/libs/libppl-2.0.0.0-SNAPSHOT.jar')
     testImplementation project(':data-prepper-plugins:blocking-buffer')
     testImplementation 'commons-io:commons-io:2.11.0'
     testImplementation "org.hamcrest:hamcrest:2.2"

@@ -22,8 +22,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
-import org.opensearch.sql.common.response.ResponseListener;
+import java.util.List;
 import org.opensearch.sql.libppl.LibPPLQueryAction;
+import org.opensearch.sql.libppl.LibPPLQueryActionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,36 +78,19 @@ public class StringPrepper implements Prepper<Record<Event>, Record<Event>> {
     }
 
     private Collection<Record<Event>> executePPL(Collection<Record<Event>> input) {
-        try {
-            // System.out.println("[" + getClass().getSimpleName() + " " + (query).getClass().getSimpleName() + "] ❗query: " +
-            //     Arrays.toString(query));
-            // System.out.println(pplLibPath);
-            ProcessBuilder builder = new ProcessBuilder("java", "-jar", pplLibPath, query[0]);
-            Process process = builder.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
-            input.forEach(eventRecord -> {
-                Event event = eventRecord.getData();
-                String line = event.toJsonString();
-                try {
-                    writer.write(line);
-                    writer.newLine();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-            writer.flush();
-            writer.close();
-            Event e = JacksonEvent.builder()
-                .withEventType("testppl")
-                .withData(reader.lines().collect(Collectors.joining("\n")))
+        List<Map<String, Object>> list = input.stream().map(record -> record.getData().toMap()).collect(Collectors.toList());
+        LibPPLQueryAction libPPLQueryAction = LibPPLQueryActionFactory.create(list);
+        libPPLQueryAction.execute(query[0]);
+        Iterable<Map<String, Object>> output = libPPLQueryAction.getOutput();
+        Collection<Record<Event>> modifiedRecords = new ArrayList<>();
+        output.forEach(map -> {
+            Event newEvent = JacksonEvent.builder()
+                .withData(map)
+                .withEventType("event")
                 .build();
-            Collection<Record<Event>> modifiedRecords = new ArrayList<>(1);
-            modifiedRecords.add(new Record<Event>(e));
-            return modifiedRecords;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+            modifiedRecords.add(new Record<>(newEvent));
+        });
+        return modifiedRecords;
     }
 
     @Override
@@ -130,18 +114,18 @@ public class StringPrepper implements Prepper<Record<Event>, Record<Event>> {
         // return modifiedRecords;
     }
 
-    // private Map<String, Object> processEventJson(final String data) throws JsonProcessingException {
-    //     final Map<String, Object> dataMap = objectMapper.readValue(data, mapTypeReference);
-    //     return dataMap.entrySet().stream()
-    //             .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-    //                 final Object val = entry.getValue();
-    //                 if (val instanceof String) {
-    //                     return query? ((String) val).toUpperCase() : ((String) val).toLowerCase();
-    //                 } else {
-    //                     return val;
-    //                 }
-    //             }));
-    // }
+    private Map<String, Object> processEventJson(final String data) throws JsonProcessingException {
+        final Map<String, Object> dataMap = objectMapper.readValue(data, mapTypeReference);
+        return dataMap.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+                    final Object val = entry.getValue();
+                    if (val instanceof String) {
+                        return ((String) val).toUpperCase();
+                    } else {
+                        return val;
+                    }
+                }));
+    }
 
     @Override
     public void prepareForShutdown() {

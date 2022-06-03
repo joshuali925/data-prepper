@@ -16,6 +16,8 @@ import com.amazon.dataprepper.model.source.Source;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +28,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -43,6 +47,7 @@ public class FileSource implements Source<Record<Object>> {
 
     private boolean isStopRequested;
     private final int writeTimeout;
+    private ExecutorService executorService;
 
     @DataPrepperPluginConstructor
     public FileSource(final FileSourceConfig fileSourceConfig, final PluginMetrics pluginMetrics, final PluginFactory pluginFactory) {
@@ -52,20 +57,67 @@ public class FileSource implements Source<Record<Object>> {
         this.writeTimeout = FileSourceConfig.DEFAULT_TIMEOUT;
     }
 
+    private void setExecutorService() {
+        if(executorService == null || executorService.isShutdown()) {
+            executorService = Executors.newSingleThreadExecutor(
+                    new ThreadFactoryBuilder().setDaemon(false).setNameFormat("random-source-pool-%d").build()
+            );
+        }
+    }
 
     @Override
     public void start(final Buffer<Record<Object>> buffer) {
+        setExecutorService();
         checkNotNull(buffer, "Buffer cannot be null for file source to start");
-        try (BufferedReader reader = Files.newBufferedReader(Paths.get(fileSourceConfig.getFilePathToRead()), StandardCharsets.UTF_8)) {
-            String line;
-            while ((line = reader.readLine()) != null && !isStopRequested) {
-                writeLineAsEventOrString(line, buffer);
+        executorService.execute(() -> {
+            while (!isStopRequested) {
+                try (BufferedReader reader = Files.newBufferedReader(Paths.get(fileSourceConfig.getFilePathToRead()), StandardCharsets.UTF_8)) {
+                    String line = "";
+                    while (!isStopRequested) {
+                        line = reader.readLine();
+                        if (line == null) {
+                            Thread.sleep(500);
+                        } else {
+                            writeLineAsEventOrString(line, buffer);
+                        }
+                    }
+                } catch (IOException | TimeoutException | IllegalArgumentException ex) {
+                    LOG.error("Error processing the input file path [{}]", fileSourceConfig.getFilePathToRead(), ex);
+                    throw new RuntimeException(format("Error processing the input file %s",
+                            fileSourceConfig.getFilePathToRead()), ex);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                /* try {
+                    LOG.info("Writing to buffer");
+                    final Record<Event> record = generateRandomStringEventRecord();
+                    buffer.write(record, 500);
+                    Thread.sleep(500);
+                } catch (final InterruptedException e) {
+                    break;
+                } catch (final TimeoutException e) {
+                    // Do nothing
+                } */
+            }
+        });
+        /* try (BufferedReader reader = Files.newBufferedReader(Paths.get(fileSourceConfig.getFilePathToRead()), StandardCharsets.UTF_8)) {
+            String line = "";
+            while (!isStopRequested) {
+                line = reader.readLine();
+                if (line == null) {
+                    System.out.println("Sleeping");
+                    Thread.sleep(500);
+                } else {
+                    writeLineAsEventOrString(line, buffer);
+                }
             }
         } catch (IOException | TimeoutException | IllegalArgumentException ex) {
             LOG.error("Error processing the input file path [{}]", fileSourceConfig.getFilePathToRead(), ex);
             throw new RuntimeException(format("Error processing the input file %s",
                     fileSourceConfig.getFilePathToRead()), ex);
-        }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } */
     }
 
     @Override

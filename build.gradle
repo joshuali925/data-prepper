@@ -69,7 +69,7 @@ subprojects {
 
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(8)
+            languageVersion = JavaLanguageVersion.of(11)
         }
     }
     tasks.withType(JavaCompile).findAll { task -> task.name.containsIgnoreCase('test') }.forEach { task ->
