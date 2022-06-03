@@ -80,7 +80,10 @@ public class StringPrepper implements Prepper<Record<Event>, Record<Event>> {
     private Collection<Record<Event>> executePPL(Collection<Record<Event>> input) {
         List<Map<String, Object>> list = input.stream().map(record -> record.getData().toMap()).collect(Collectors.toList());
         LibPPLQueryAction libPPLQueryAction = LibPPLQueryActionFactory.create(list);
-        libPPLQueryAction.execute(query[0]);
+        Arrays.stream(query)
+            .forEach(query -> {
+                libPPLQueryAction.execute(query);
+            });
         Iterable<Map<String, Object>> output = libPPLQueryAction.getOutput();
         Collection<Record<Event>> modifiedRecords = new ArrayList<>();
         output.forEach(map -> {

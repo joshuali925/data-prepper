@@ -15,8 +15,11 @@ simple-sample-pipeline:
   processor:
     - string_converter:
         query:
-          - "source = stdin | stats count()"
-          - "test2"
+          - "source = stdin | stats count() by method"
+          - "source = stdin | stats count() as throughput"
+          - "source = stdin | where status > 299 | stats count() as errors"
+          - "source = stdin | stats avg(bytes) as avgBytes"
+          - "source = stdin | stats sum(bytes) as totalBytes"
   sink:
     - stdout:
     # - opensearch:
